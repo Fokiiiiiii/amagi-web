@@ -2,7 +2,7 @@ import { Package, Plus } from 'lucide-react'
 import type React from 'react'
 import { Button } from '../../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card'
-import type { ItemSummary, PlayerItemEntry } from '../../../types'
+import type { PlayerItemEntry } from '../../../types'
 
 type SelectedInventoryItem = {
 	itemId: number
@@ -12,7 +12,7 @@ type SelectedInventoryItem = {
 
 type InventoryTabProps = {
 	items: PlayerItemEntry[]
-	itemMap: Map<number, ItemSummary>
+	itemMap: Map<number, { rarity: number }>
 	canWrite: boolean
 	onAddItem: () => void
 	onEditItem: (item: SelectedInventoryItem) => void

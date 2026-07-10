@@ -1,6 +1,15 @@
-# belfast-web
+# Amagi Web
 
-a basic react front-end for [belfast](https://github.com/ggmolly/belfast).
+Amagi Web is the administration frontend for Amagi/Belfast.
+
+It remains compatible with the Belfast backend, including the `belfast` PostgreSQL database name and existing API routes.
+
+## Requirements
+
+- Server baseline: `d9b4c900` or newer
+- Backend database name: `belfast`
+- API base URL: set `VITE_API_BASE` to the Belfast backend API root, for example `http://127.0.0.1:2289/api/v1`
+- Perfect Account access: `players.write_any` permission is required
 
 ## requirements
 

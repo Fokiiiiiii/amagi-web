@@ -19,6 +19,7 @@ export const queryKeys = {
 		ships: () => ['catalog', 'ships'] as const,
 		items: () => ['catalog', 'items'] as const,
 		skins: () => ['catalog', 'skins'] as const,
+		equipments: () => ['catalog', 'equipments'] as const,
 	},
 	ships: {
 		skins: (shipId: number) => ['ships', shipId, 'skins'] as const,

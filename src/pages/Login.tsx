@@ -119,9 +119,10 @@ export const LoginPage = () => {
 		<div className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
 			<Card className="w-full max-w-md">
 				<CardHeader>
-					<CardTitle className="text-center">Belfast</CardTitle>
+					<CardTitle className="text-center">Amagi Web</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-6">
+					<p className="text-center text-sm text-muted-foreground">Administration frontend for Amagi/Belfast.</p>
 					{bootstrapStatusQuery.isLoading ? (
 						<div className="space-y-3">
 							<div className="h-9 w-full animate-pulse rounded-md bg-muted" />

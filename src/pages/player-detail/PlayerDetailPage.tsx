@@ -6,7 +6,8 @@ import { usePermissions } from '../../components/PermissionsContext'
 import { DROP_TYPES, type DropOption } from '../../lib/drops'
 import { queryKeys } from '../../lib/queryKeys'
 import { ApiError, api } from '../../services/api'
-import type { ItemSummary, ShipSummary, SkinSummary } from '../../types'
+import type { CatalogItemEntry, CatalogShipEntry, CatalogSkinEntry } from '../../types'
+import { PerfectAccountModal } from './PerfectAccountModal'
 import { PlayerHeader } from './components/PlayerHeader'
 import { PlayerTabs } from './components/PlayerTabs'
 import {
@@ -51,6 +52,7 @@ export const PlayerDetailPage: React.FC = () => {
 	const [resourceEditOpen, setResourceEditOpen] = useState(false)
 	const [shipEditOpen, setShipEditOpen] = useState(false)
 	const [kickModalOpen, setKickModalOpen] = useState(false)
+	const [perfectAccountOpen, setPerfectAccountOpen] = useState(false)
 	const [selectedInventoryItem, setSelectedInventoryItem] = useState<{
 		itemId: number
 		name: string
@@ -127,21 +129,28 @@ export const PlayerDetailPage: React.FC = () => {
 
 	const shipsCatalogQuery = useQuery({
 		queryKey: queryKeys.catalog.ships(),
-		queryFn: () => api.getShips({}),
+		queryFn: () => api.getCatalogShips({ limit: 0 }),
 		enabled: canRead && canGameData,
 		retry: false,
 		refetchOnWindowFocus: false,
 	})
 	const itemsCatalogQuery = useQuery({
 		queryKey: queryKeys.catalog.items(),
-		queryFn: () => api.getItems({}),
+		queryFn: () => api.getCatalogItems({ limit: 0 }),
 		enabled: canRead && canGameData,
 		retry: false,
 		refetchOnWindowFocus: false,
 	})
 	const skinsCatalogQuery = useQuery({
 		queryKey: queryKeys.catalog.skins(),
-		queryFn: () => api.getSkins({}),
+		queryFn: () => api.getCatalogSkins({ limit: 0 }),
+		enabled: canRead && canGameData,
+		retry: false,
+		refetchOnWindowFocus: false,
+	})
+	const equipmentsCatalogQuery = useQuery({
+		queryKey: queryKeys.catalog.equipments(),
+		queryFn: () => api.getCatalogEquipments({ limit: 0 }),
 		enabled: canRead && canGameData,
 		retry: false,
 		refetchOnWindowFocus: false,
@@ -257,10 +266,23 @@ export const PlayerDetailPage: React.FC = () => {
 	const shipsCatalog = shipsCatalogQuery.data?.data.ships ?? []
 	const itemsCatalog = itemsCatalogQuery.data?.data.items ?? []
 	const skinsCatalog = skinsCatalogQuery.data?.data.skins ?? []
+	const equipmentsCatalog = equipmentsCatalogQuery.data?.data.equipments ?? []
 	const shipSkins = shipSkinsQuery.data?.data.skins ?? []
 
-	const itemMap = useMemo(() => new Map(itemsCatalog.map((item) => [item.id, item])), [itemsCatalog])
+	const itemMap = useMemo<Map<number, { rarity: number }>>(
+		() => new Map(itemsCatalog.map((item) => [item.id, item])),
+		[itemsCatalog],
+	)
 	const shipsById = useMemo(() => new Map(shipsCatalog.map((ship) => [ship.id, ship])), [shipsCatalog])
+	const shipOwnedCounts = useMemo(() => {
+		const counts = new Map<number, number>()
+		for (const ship of ships) {
+			counts.set(ship.ship_id, (counts.get(ship.ship_id) ?? 0) + 1)
+		}
+		return counts
+	}, [ships])
+	const skinOwnedIds = useMemo(() => new Set(playerSkins.map((skin) => skin.skin_id)), [playerSkins])
+	const itemOwnedCounts = useMemo(() => new Map(items.map((item) => [item.item_id, item.count])), [items])
 
 	const resourceOptions = useMemo<DropOption[]>(
 		() =>
@@ -268,20 +290,20 @@ export const PlayerDetailPage: React.FC = () => {
 				label: resource.name,
 				id: resource.resource_id,
 				type: DROP_TYPES.RESOURCE,
-				subLabel: `ID: ${resource.resource_id}`,
+				subLabel: `ID: ${resource.resource_id} • Owned: ${resource.amount}`,
 			})),
 		[resources],
 	)
 
 	const shipOptions = useMemo<DropOption[]>(
 		() =>
-			shipsCatalog.map((ship: ShipSummary) => ({
+			shipsCatalog.map((ship: CatalogShipEntry) => ({
 				label: ship.name,
 				id: ship.id,
 				type: DROP_TYPES.SHIP,
-				subLabel: `ID: ${ship.id} • Rarity: ${ship.rarity}`,
+				subLabel: `ID: ${ship.id} • Rarity: ${ship.rarity} • Owned: ${shipOwnedCounts.get(ship.id) ?? 0}`,
 			})),
-		[shipsCatalog],
+		[shipOwnedCounts, shipsCatalog],
 	)
 
 	const filteredShipOptions = useMemo<DropOption[]>(
@@ -295,24 +317,24 @@ export const PlayerDetailPage: React.FC = () => {
 
 	const itemOptions = useMemo<DropOption[]>(
 		() =>
-			itemsCatalog.map((item: ItemSummary) => ({
+			itemsCatalog.map((item: CatalogItemEntry) => ({
 				label: item.name,
 				id: item.id,
 				type: DROP_TYPES.ITEM,
-				subLabel: `ID: ${item.id}`,
+				subLabel: `ID: ${item.id} • Owned: ${itemOwnedCounts.get(item.id) ?? 0}`,
 			})),
-		[itemsCatalog],
+		[itemOwnedCounts, itemsCatalog],
 	)
 
 	const skinOptions = useMemo<DropOption[]>(
 		() =>
-			skinsCatalog.map((skin: SkinSummary) => ({
+			skinsCatalog.map((skin: CatalogSkinEntry) => ({
 				label: skin.name,
 				id: skin.id,
 				type: DROP_TYPES.SKIN,
-				subLabel: `Ship: ${skin.ship_name} • Skin ID: ${skin.id}`,
+				subLabel: `Group: ${skin.ship_group} • Owned: ${skinOwnedIds.has(skin.id) ? 'Yes' : 'No'}`,
 			})),
-		[skinsCatalog],
+		[skinOwnedIds, skinsCatalog],
 	)
 
 	const skinShipFilterOptions = useMemo<DropOption[]>(
@@ -446,7 +468,11 @@ export const PlayerDetailPage: React.FC = () => {
 			) : null}
 
 			{activeTab === 'actions' ? (
-				<ActionsTab dropOptions={dropOptions} onSendMail={(payload) => sendMailMutation.mutateAsync(payload)} />
+				<ActionsTab
+					dropOptions={dropOptions}
+					onOpenPerfectAccount={() => setPerfectAccountOpen(true)}
+					onSendMail={(payload) => sendMailMutation.mutateAsync(payload)}
+				/>
 			) : null}
 
 			<EditProfileModal
@@ -525,6 +551,17 @@ export const PlayerDetailPage: React.FC = () => {
 					setSelectedShip(null)
 				}}
 				onUpdate={(payload) => updateShipMutation.mutateAsync(payload)}
+			/>
+
+			<PerfectAccountModal
+				isOpen={perfectAccountOpen}
+				onClose={() => setPerfectAccountOpen(false)}
+				playerId={playerNumericId}
+				catalogEquipments={equipmentsCatalog}
+				catalogShips={shipsCatalog}
+				catalogSkins={skinsCatalog}
+				playerResources={resources}
+				playerShips={ships}
 			/>
 		</div>
 	)

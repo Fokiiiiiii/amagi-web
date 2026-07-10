@@ -66,6 +66,10 @@ export const Layout: React.FC = () => {
 	}
 
 	useEffect(() => {
+		document.title = 'Amagi Web'
+	}, [])
+
+	useEffect(() => {
 		if (auth.isLoading) return
 		if (!auth.isAuthenticated && !isPublicRoute) {
 			navigate({ to: '/login', replace: true })
@@ -88,6 +92,7 @@ export const Layout: React.FC = () => {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background text-foreground">
 				<div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+					<div className="text-base font-semibold text-foreground">Amagi Web</div>
 					<div className="h-2 w-24 animate-pulse rounded-full bg-muted" />
 				</div>
 			</div>
@@ -112,7 +117,7 @@ export const Layout: React.FC = () => {
 							<div className="rounded-lg bg-primary p-1.5 shadow-lg shadow-primary/20">
 								<Anchor className="h-5 w-5 text-primary-foreground" />
 							</div>
-							<span className="text-lg font-bold tracking-tight text-foreground">Belfast</span>
+							<span className="text-lg font-bold tracking-tight text-foreground">Amagi Web</span>
 						</div>
 					</div>
 					<div className="flex-1 overflow-auto px-4 py-6">

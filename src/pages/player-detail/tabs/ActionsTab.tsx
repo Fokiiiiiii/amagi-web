@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form'
-import { Mail } from 'lucide-react'
+import { Mail, Sparkles } from 'lucide-react'
 import type React from 'react'
 import { Button } from '../../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card'
@@ -11,6 +11,7 @@ type MailAttachmentDraft = { id: string; dropId: number | null; dropType: number
 
 type ActionsTabProps = {
 	dropOptions: DropOption[]
+	onOpenPerfectAccount: () => void
 	onSendMail: (payload: {
 		title: string
 		body: string
@@ -19,7 +20,7 @@ type ActionsTabProps = {
 	}) => Promise<unknown>
 }
 
-export const ActionsTab: React.FC<ActionsTabProps> = ({ dropOptions, onSendMail }) => {
+export const ActionsTab: React.FC<ActionsTabProps> = ({ dropOptions, onOpenPerfectAccount, onSendMail }) => {
 	const mailForm = useForm({
 		defaultValues: {
 			title: '',
@@ -47,6 +48,20 @@ export const ActionsTab: React.FC<ActionsTabProps> = ({ dropOptions, onSendMail 
 
 	return (
 		<div className="grid gap-6 md:grid-cols-1">
+			<Card>
+				<CardHeader className="flex flex-row items-center justify-between gap-4">
+					<div className="flex items-center gap-2">
+						<Sparkles className="h-5 w-5 text-primary" />
+						<CardTitle>Perfect Account</CardTitle>
+					</div>
+					<Button type="button" onClick={onOpenPerfectAccount}>
+						Open
+					</Button>
+				</CardHeader>
+				<CardContent className="text-sm text-muted-foreground">
+					Preview and apply missing-only perfect-account changes with confirmation.
+				</CardContent>
+			</Card>
 			<Card>
 				<CardHeader className="flex flex-row items-center gap-2">
 					<Mail className="h-5 w-5 text-primary" />

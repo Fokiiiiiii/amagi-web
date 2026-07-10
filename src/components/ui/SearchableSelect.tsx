@@ -1,3 +1,4 @@
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Check, ChevronDown, Search } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -36,6 +37,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 	const [searchTerm, setSearchTerm] = useState('')
 	const wrapperRef = useRef<HTMLDivElement>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
+	const listRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -77,6 +79,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 		})
 	}, [options, searchTerm, whitelist, blacklist])
 
+	const rowVirtualizer = useVirtualizer({
+		count: filteredOptions.length,
+		getScrollElement: () => listRef.current,
+		estimateSize: () => 72,
+		overscan: 8,
+	})
+
 	const handleSelect = (optionValue: DropSelection) => {
 		onChange(optionValue)
 		setIsOpen(false)
@@ -112,34 +121,44 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 			</div>
 
 			{isOpen ? (
-				<div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in zoom-in-95 duration-100">
+				<div
+					ref={listRef}
+					className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in zoom-in-95 duration-100"
+				>
 					{filteredOptions.length === 0 ? (
 						<div className="px-2 py-4 text-center text-sm text-muted-foreground">No results found.</div>
 					) : (
-						<div className="p-1">
-							{filteredOptions.map((option) => (
-								<button
-									type="button"
-									key={`${option.type}-${option.id}`}
-									className={`relative flex w-full cursor-pointer select-none items-center justify-between rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground ${value?.id === option.id && value?.type === option.type ? 'bg-accent/50 text-accent-foreground font-medium' : ''}`}
-									onClick={() => handleSelect({ id: option.id, type: option.type })}
-								>
-									<div className="flex flex-col">
-										<div className="flex items-center gap-2">
-											<span>{option.label}</span>
-											<span
-												className={`rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider ${DROP_TYPE_BADGE_CLASSES[option.type]}`}
-											>
-												{DROP_TYPE_LABELS[option.type]}
-											</span>
+						<div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+							{rowVirtualizer.getVirtualItems().map((virtualRow) => {
+								const option = filteredOptions[virtualRow.index]
+								return (
+									<button
+										type="button"
+										key={`${option.type}-${option.id}`}
+										ref={rowVirtualizer.measureElement}
+										className={`absolute left-0 top-0 flex w-full cursor-pointer select-none items-center justify-between rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground ${value?.id === option.id && value?.type === option.type ? 'bg-accent/50 font-medium text-accent-foreground' : ''}`}
+										style={{ transform: `translateY(${virtualRow.start}px)` }}
+										onClick={() => handleSelect({ id: option.id, type: option.type })}
+									>
+										<div className="flex flex-col">
+											<div className="flex items-center gap-2">
+												<span>{option.label}</span>
+												<span
+													className={`rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider ${DROP_TYPE_BADGE_CLASSES[option.type]}`}
+												>
+													{DROP_TYPE_LABELS[option.type]}
+												</span>
+											</div>
+											{option.subLabel ? (
+												<span className="text-xs text-muted-foreground">{option.subLabel}</span>
+											) : null}
 										</div>
-										{option.subLabel ? <span className="text-xs text-muted-foreground">{option.subLabel}</span> : null}
-									</div>
-									{value?.id === option.id && value?.type === option.type ? (
-										<Check className="h-3 w-3 text-primary" />
-									) : null}
-								</button>
-							))}
+										{value?.id === option.id && value?.type === option.type ? (
+											<Check className="h-3 w-3 text-primary" />
+										) : null}
+									</button>
+								)
+							})}
 						</div>
 					)}
 				</div>

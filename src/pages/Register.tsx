@@ -168,9 +168,10 @@ export const RegisterPage: React.FC = () => {
 		<div className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
 			<Card className="w-full max-w-md">
 				<CardHeader>
-					<CardTitle className="text-center">Player Account</CardTitle>
+					<CardTitle className="text-center">Amagi Web</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-6">
+					<p className="text-center text-sm text-muted-foreground">Create and register a player account for Amagi/Belfast.</p>
 					<div className="flex items-center justify-between">
 						<Link to="/login" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
 							<ArrowLeft className="mr-2 h-4 w-4" />

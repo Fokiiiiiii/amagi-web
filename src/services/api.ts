@@ -17,6 +17,10 @@ import type {
 	AuthPasswordChangeRequest,
 	AuthSessionResponse,
 	BanPlayerRequest,
+	CatalogEquipmentListResponse,
+	CatalogItemListResponse,
+	CatalogShipListResponse,
+	CatalogSkinListResponse,
 	ConnectionSummary,
 	ExchangeCodeListResponse,
 	ExchangeCodeRedeemListResponse,
@@ -40,6 +44,9 @@ import type {
 	PasskeyRegisterOptionsResponse,
 	PasskeyRegisterResponse,
 	PasskeyRegisterVerifyRequest,
+	PerfectAccountApplyResult,
+	PerfectAccountPreview,
+	PerfectAccountRequest,
 	PermissionListResponse,
 	PlayerDetailResponse,
 	PlayerItemResponse,
@@ -365,6 +372,24 @@ export const api = {
 	getShipSkins: (shipId: number) => request<ShipSkinListResponse>(`/ships/${shipId}/skins`),
 	getSkins: (params: { offset?: number; limit?: number }) => request<SkinListResponse>(`/skins${buildParams(params)}`),
 	getItems: (params: { offset?: number; limit?: number }) => request<ItemListResponse>(`/items${buildParams(params)}`),
+	getCatalogShips: (params: { offset?: number; limit?: number }) =>
+		request<CatalogShipListResponse>(`/catalog/ships${buildParams(params)}`),
+	getCatalogItems: (params: { offset?: number; limit?: number }) =>
+		request<CatalogItemListResponse>(`/catalog/items${buildParams(params)}`),
+	getCatalogSkins: (params: { offset?: number; limit?: number }) =>
+		request<CatalogSkinListResponse>(`/catalog/skins${buildParams(params)}`),
+	getCatalogEquipments: (params: { offset?: number; limit?: number }) =>
+		request<CatalogEquipmentListResponse>(`/catalog/equipments${buildParams(params)}`),
+	previewPerfectAccount: (id: number, payload: PerfectAccountRequest) =>
+		request<PerfectAccountPreview>(`/players/${id}/perfect-account/preview`, {
+			method: 'POST',
+			body: JSON.stringify(payload),
+		}),
+	applyPerfectAccount: (id: number, payload: PerfectAccountRequest) =>
+		request<PerfectAccountApplyResult>(`/players/${id}/perfect-account/apply`, {
+			method: 'POST',
+			body: JSON.stringify(payload),
+		}),
 
 	getNotices: (params: { offset?: number; limit?: number }) =>
 		request<NoticeListResponse>(`/notices${buildParams(params)}`),

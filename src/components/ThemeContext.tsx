@@ -15,6 +15,20 @@ interface ThemeProviderState {
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState | null>(null)
+const LEGACY_THEME_STORAGE_KEYS = ['belfast-admin-theme']
+
+const loadStoredTheme = (storageKey: string, defaultTheme: Theme) => {
+	const currentTheme = localStorage.getItem(storageKey) as Theme | null
+	if (currentTheme) return currentTheme
+	for (const legacyKey of LEGACY_THEME_STORAGE_KEYS) {
+		const legacyTheme = localStorage.getItem(legacyKey) as Theme | null
+		if (legacyTheme) {
+			localStorage.setItem(storageKey, legacyTheme)
+			return legacyTheme
+		}
+	}
+	return defaultTheme
+}
 
 export function ThemeProvider({
 	children,
@@ -22,7 +36,7 @@ export function ThemeProvider({
 	storageKey = 'theme',
 	...props
 }: ThemeProviderProps) {
-	const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem(storageKey) as Theme) || defaultTheme)
+	const [theme, setTheme] = useState<Theme>(() => loadStoredTheme(storageKey, defaultTheme))
 
 	useEffect(() => {
 		const root = window.document.documentElement

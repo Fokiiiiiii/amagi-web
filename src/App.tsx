@@ -25,7 +25,7 @@ const AppToaster = () => {
 const App = () => {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ThemeProvider defaultTheme="system" storageKey="belfast-admin-theme">
+			<ThemeProvider defaultTheme="system" storageKey="amagi-web-theme">
 				<AuthProvider>
 					<PermissionsProvider>
 						<AppToaster />
