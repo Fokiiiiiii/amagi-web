@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
 import type React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
@@ -53,7 +53,7 @@ export const isPerfectAccountConfirmationValid = (playerId: number, confirmText:
 	confirmText.trim() === String(playerId)
 
 export const hasUnsupportedFullEquipmentMode = (preview: PerfectAccountPreview | null) =>
-	Boolean(preview?.unsupported_operations.some((operation) => operation.field === 'equipment_mode'))
+	Boolean(preview?.unsupported_operations?.some((operation) => operation.field === 'equipment_mode'))
 
 const formatIds = (values: Array<number | string> | null | undefined) => {
 	if (!values || values.length === 0) return 'None'
@@ -109,18 +109,31 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 		},
 	})
 
-	const resetState = useCallback(() => {
-		setDraft(DEFAULT_PERFECT_ACCOUNT_DRAFT)
-		setPreview(null)
-		setApplyResult(null)
-		setConfirmPlayerId('')
-		previewMutation.reset()
-		applyMutation.reset()
-	}, [applyMutation, previewMutation])
+	const previewResetRef = useRef(previewMutation.reset)
+	const applyResetRef = useRef(applyMutation.reset)
+	const wasOpenRef = useRef(false)
+	useEffect(() => {
+		previewResetRef.current = previewMutation.reset
+		applyResetRef.current = applyMutation.reset
+	}, [previewMutation.reset, applyMutation.reset])
+
+	const resetState = useMemo(
+		() => () => {
+			setDraft(DEFAULT_PERFECT_ACCOUNT_DRAFT)
+			setPreview(null)
+			setApplyResult(null)
+			setConfirmPlayerId('')
+			previewResetRef.current()
+			applyResetRef.current()
+		},
+		[],
+	)
 
 	useEffect(() => {
-		if (!isOpen) return
-		resetState()
+		if (isOpen && !wasOpenRef.current) {
+			resetState()
+		}
+		wasOpenRef.current = isOpen
 	}, [isOpen, resetState])
 
 	const request = useMemo(() => buildPerfectAccountRequest(draft), [draft])
@@ -159,6 +172,8 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 		if (preview === null) {
 			return <p className="text-sm text-muted-foreground">Preview has not been run yet.</p>
 		}
+		const warnings = preview.warnings ?? []
+		const unsupportedOperations = preview.unsupported_operations ?? []
 
 		return (
 			<div className="space-y-4">
@@ -352,22 +367,22 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 					</CardContent>
 				</Card>
 
-				{preview.warnings.length > 0 ? (
+				{warnings.length > 0 ? (
 					<div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-3 text-sm">
 						<div className="mb-2 font-medium text-amber-700 dark:text-amber-300">Warnings</div>
 						<ul className="list-disc space-y-1 pl-5 text-amber-800 dark:text-amber-200">
-							{preview.warnings.map((warning) => (
+							{warnings.map((warning) => (
 								<li key={warning}>{warning}</li>
 							))}
 						</ul>
 					</div>
 				) : null}
 
-				{preview.unsupported_operations.length > 0 ? (
+				{unsupportedOperations.length > 0 ? (
 					<div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
 						<div className="mb-2 font-medium text-destructive">Unsupported operations</div>
 						<ul className="space-y-1">
-							{preview.unsupported_operations.map((operation) => (
+							{unsupportedOperations.map((operation) => (
 								<li key={`${operation.field}-${operation.reason}`} className="text-destructive">
 									<span className="font-mono">{operation.field}</span>: {operation.reason}
 								</li>
@@ -383,6 +398,7 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 		if (applyResult === null) {
 			return null
 		}
+		const unsupportedOperations = applyResult.unsupported_operations ?? []
 
 		return (
 			<div className="space-y-3 rounded-lg border border-border bg-muted/10 p-4 text-sm">
@@ -437,11 +453,11 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 						</ul>
 					</div>
 				</div>
-				{applyResult.unsupported_operations.length > 0 ? (
+				{unsupportedOperations.length > 0 ? (
 					<div className="rounded-md border border-amber-400/40 bg-amber-500/10 p-3 text-xs">
 						<div className="font-medium text-amber-700 dark:text-amber-300">Unsupported operations</div>
 						<ul className="mt-2 space-y-1 text-amber-800 dark:text-amber-200">
-							{applyResult.unsupported_operations.map((operation) => (
+							{unsupportedOperations.map((operation) => (
 								<li key={`${operation.field}-${operation.reason}`}>
 									{operation.field}: {operation.reason}
 								</li>
@@ -454,7 +470,12 @@ export const PerfectAccountModal: React.FC<PerfectAccountModalProps> = ({
 	}
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose} title="Perfect Account" panelClassName="max-w-5xl">
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title="Perfect Account"
+			panelClassName="max-h-[80vh] max-w-5xl overflow-y-auto"
+		>
 			<div className="space-y-5">
 				<div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
 					<Card>
